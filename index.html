@@ -1,10 +1,10 @@
-<!-- Gr8terThings Subscribe Form v2.0.2 -->
+<!-- Gr8terThings Subscribe Form v2.0.3 -->
 <!--
 Changelog:
-- Reintroduced hidden input fields for CampaignInterest, DeliveryPreference, and source
-- Ensures both Airtable and Zapier receive these fields via FormData
-- Replaced alert with console-based version logging
-- Cleaned code for consistent field handling
+- Fully manual data collection: no FormData, no hidden fields
+- Sends consistent, controlled JSON to Airtable and Zapier
+- Ensures Campaign Interest and Delivery Preference are always included
+- Removed alert, logs version and payload to console
 -->
 
 <!DOCTYPE html>
@@ -76,9 +76,9 @@ Changelog:
   <form id="subscriber-form" style="max-width: 480px; margin: auto;">
     <fieldset style="margin-bottom: 20px; border: none;">
       <legend style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">Free Daily 1-Minute Video Sign Up</legend>
-      <input type="text" name="firstName" placeholder="First Name" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
-      <input type="text" name="lastName" placeholder="Last Name (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
-      <input type="email" name="emailAddress" placeholder="Email Address" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
+      <input type="text" id="firstName" placeholder="First Name" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
+      <input type="text" id="lastName" placeholder="Last Name (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+      <input type="email" id="emailAddress" placeholder="Email Address" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
       <input type="checkbox" id="pivot-opt-in" checked>
       <label for="pivot-opt-in"><strong>Free Gift</strong> – Send my daily 1-minute motivation video</label>
       <p style="font-size: 0.75rem; margin-top: 10px;">We respect your <a href="https://emailoctopus.com/legal/privacy" target="_blank" style="color: #003E24; text-decoration: underline;">email privacy</a></p>
@@ -90,14 +90,9 @@ Changelog:
 
     <fieldset style="margin-bottom: 20px; border: none;">
       <legend style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">Want Optional SMS Updates?</legend>
-      <input type="text" name="phoneNumber" placeholder="Phone Number (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+      <input type="text" id="phoneNumber" placeholder="Phone Number (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
       <input type="checkbox" id="sms-text"><label for="sms-text">Yes, I want to receive SMS updates</label>
     </fieldset>
-
-    <!-- Hidden inputs to support formData.set() compatibility -->
-    <input type="hidden" name="CampaignInterest" />
-    <input type="hidden" name="DeliveryPreference" />
-    <input type="hidden" name="source" />
 
     <div style="text-align: center; margin-top: 20px;">
       <img src="https://images.squarespace-cdn.com/content/v1/663236de8f14cb7949a6465b/3e3ecff1-3751-4377-8c1b-4043bd2b67ed/Gr8ter+Things_Full+Logo_2024_png.png?format=1500w" alt="Gr8terThings Logo" style="width: 100%; height: auto;">
@@ -117,29 +112,41 @@ Changelog:
     }
 
     form.addEventListener('submit', async function (e) {
-      console.log("Gr8terThings Subscribe Form v2.0.2");
       e.preventDefault();
+      console.log("Gr8terThings Subscribe Form v2.0.3");
+
+      const firstName = document.getElementById('firstName').value.trim();
+      const lastName = document.getElementById('lastName').value.trim();
+      const emailAddress = document.getElementById('emailAddress').value.trim();
+      const phoneNumber = document.getElementById('phoneNumber').value.trim();
 
       const wantsText = document.getElementById('sms-text').checked;
       const wantsEmail = document.getElementById('pivot-opt-in').checked;
 
-      const campaignTags = ["Newsletter"];
-      if (wantsEmail) campaignTags.push("Pivot Year");
+      const deliveryPreference = wantsText && wantsEmail ? 'Both' :
+                                wantsText ? 'Text' :
+                                wantsEmail ? 'Email' : '';
 
-      const deliveryPref = wantsText && wantsEmail ? 'Both' : wantsText ? 'Text' : wantsEmail ? 'Email' : '';
+      const campaignTags = ['Newsletter'];
+      if (wantsEmail) campaignTags.push('Pivot Year');
 
-      const formData = new FormData(form);
-      formData.set("CampaignInterest", campaignTags.join(", ").trim());
-      formData.set("DeliveryPreference", deliveryPref.trim());
-      formData.set("source", getSource());
+      const data = {
+        firstName,
+        lastName,
+        emailAddress,
+        phoneNumber,
+        DeliveryPreference: deliveryPreference,
+        CampaignInterest: campaignTags.join(", "),
+        source: getSource()
+      };
 
-      const data = Object.fromEntries(formData.entries());
       console.log("Submitting with:", data);
 
       spinner.style.display = 'flex';
       setTimeout(() => { progressBar.style.width = '100%'; }, 50);
 
       try {
+        // Send to Airtable
         const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -153,10 +160,11 @@ Changelog:
 
         const airtableJson = await airtableRes.json();
 
+        // Send to Zapier
         await fetch("https://hooks.zapier.com/hooks/catch/18389329/27z9vfs/", {
           method: "POST",
-          body: formData,
-          mode: "no-cors"
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(data)
         });
 
         const redirectUrl = airtableJson.status === "updated"
