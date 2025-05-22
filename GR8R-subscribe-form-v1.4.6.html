@@ -1,0 +1,149 @@
+<!-- Gr8terThings Subscribe Form v1.4.6 -->
+<!--
+Changelog:
+- FIXED: campaignInterest and deliveryPreference values were not being set before FormData was captured
+- Now sets hidden field values before submission
+- Confirmed working in browser console using .value test
+-->
+
+<link rel="preload" as="image" href="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&st=q23sokwf&raw=1">
+
+<style>
+  #loading-spinner {
+    display: none;
+    position: fixed;
+    top: 0; left: 0;
+    width: 100%; height: 100%;
+    background-color: rgba(255, 255, 255, 0.95);
+    z-index: 9999;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    font-family: inherit;
+  }
+  .spinner-logo {
+    width: 80px; height: 80px;
+    border-radius: 50%;
+    animation: spin 1.2s linear infinite;
+    margin-bottom: 20px;
+  }
+  @keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+  }
+  .spinner-message { font-size: 1.3em; font-weight: bold; color: #003E24; margin-bottom: 20px; }
+  .progress-container { width: 200px; height: 10px; background-color: #eee; border-radius: 5px; overflow: hidden; }
+  .progress-bar { height: 100%; width: 0%; background-color: #B44E00; transition: width 4s linear; }
+</style>
+
+<div id="loading-spinner">
+  <img class="spinner-logo" src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&st=q23sokwf&raw=1" alt="Logo" onerror="this.style.display='none';">
+  <div class="spinner-message">Unlocking Gr8ter Things!</div>
+  <div class="progress-container"><div class="progress-bar" id="progress-bar"></div></div>
+</div>
+
+<form id="subscriber-form" style="max-width: 480px; margin: auto;">
+  <fieldset style="margin-bottom: 20px; border: none;">
+    <legend style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">Free Daily 1-Minute Video Sign Up</legend>
+    <input type="text" name="firstName" placeholder="First Name" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
+    <input type="text" name="lastName" placeholder="Last Name (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+    <input type="email" name="emailAddress" placeholder="Email Address" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
+    <input type="checkbox" id="pivot-opt-in" checked>
+    <label for="pivot-opt-in"><strong>Free Gift</strong> – Send my daily 1-minute motivation video</label>
+    <input type="hidden" id="campaignInterest" name="CampaignInterest">
+    <input type="hidden" id="source" name="source">
+    <p style="font-size: 0.75rem; margin-top: 10px;">We respect your <a href="https://emailoctopus.com/legal/privacy" target="_blank" style="color: #003E24; text-decoration: underline;">email privacy</a></p>
+  </fieldset>
+
+  <div style="text-align: center; margin: 20px 0;">
+    <button type="submit" style="background-color: #B44E00; color: #fff; padding: 14px 24px; border: none; border-radius: 30px; font-size: 20px; cursor: pointer; width: 50%;">Subscribe</button>
+  </div>
+
+  <fieldset style="margin-bottom: 20px; border: none;">
+    <legend style="font-weight: bold; font-size: 1.1em; margin-bottom: 10px;">Want Optional SMS Updates?</legend>
+    <input type="text" name="phoneNumber" placeholder="Phone Number (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
+    <input type="checkbox" id="sms-text"><label for="sms-text">Yes, I want to receive SMS updates</label>
+    <input type="hidden" id="deliveryPreference" name="DeliveryPreference">
+  </fieldset>
+
+  <div style="text-align: center; margin-top: 20px;">
+    <img src="https://images.squarespace-cdn.com/content/v1/663236de8f14cb7949a6465b/3e3ecff1-3751-4377-8c1b-4043bd2b67ed/Gr8ter+Things_Full+Logo_2024_png.png?format=1500w" alt="Gr8terThings Logo" style="width: 100%; height: auto;">
+  </div>
+</form>
+
+<script>
+  const form = document.getElementById('subscriber-form');
+  const spinner = document.getElementById('loading-spinner');
+  const progressBar = document.getElementById('progress-bar');
+
+  function getSource() {
+    const referrer = document.referrer || "Direct";
+    const page = window.location.href;
+    const timestamp = new Date().toISOString();
+    return `${referrer} | ${page} | ${timestamp}`;
+  }
+
+  form.addEventListener('submit', async function (e) {
+    alert("v1.4.6 script running"); // optional but helps confirm you're using the right version
+    e.preventDefault();
+
+    const wantsText = document.getElementById('sms-text').checked;
+    const wantsEmail = document.getElementById('pivot-opt-in').checked;
+
+    const campaignTags = ["Newsletter"];
+    if (wantsEmail) campaignTags.push("Pivot Year");
+
+    const deliveryPref = wantsText && wantsEmail ? 'Both' : wantsText ? 'Text' : wantsEmail ? 'Email' : '';
+
+    // ✅ Set hidden field values BEFORE building FormData
+    document.getElementById('deliveryPreference').value = deliveryPref;
+    document.getElementById('campaignInterest').value = campaignTags.join(", ");
+    document.getElementById('source').value = getSource();
+
+    const formData = new FormData(form); // ✅ Now includes updated hidden fields
+    const data = Object.fromEntries(formData.entries());
+
+    console.log("Submitting with:", data);
+
+    spinner.style.display = 'flex';
+    setTimeout(() => { progressBar.style.width = '100%'; }, 50);
+
+    try {
+      const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data)
+      });
+
+      if (!airtableRes.ok) {
+        const errText = await airtableRes.text();
+        throw new Error(errText);
+      }
+
+      const airtableJson = await airtableRes.json();
+
+      await fetch("https://hooks.zapier.com/hooks/catch/18389329/27z9vfs/", {
+        method: "POST",
+        body: formData,
+        mode: "no-cors"
+      });
+
+      const redirectUrl = airtableJson.status === "updated"
+        ? "https://www.gr8terthings.com/thank-you-updated"
+        : "https://www.gr8terthings.com/thank-you";
+
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 4000);
+
+    } catch (err) {
+      let message = "There was an error submitting your info. Please try again later.";
+      if (err.message.includes("duplicate") || err.message.includes("already")) {
+        message = "You're already subscribed — no need to resubmit.";
+      }
+      alert(message);
+      console.error("Submission Error:", err);
+      spinner.style.display = 'none';
+    }
+  });
+</script>
