@@ -1,10 +1,10 @@
-<!-- Gr8terThings Subscribe Form v2.0.1 -->
+<!-- Gr8terThings Subscribe Form v2.0.2 -->
 <!--
 Changelog:
-- Replaced all hidden fields with `formData.set()` to bypass DOM quirks
-- Ensures Delivery Preference, Campaign Interest, and Source are always sent
-- Upgraded version tag to v2.0.1 for clarity in alerts and logs
-- Designed for Cloudflare Pages (no dependency on Squarespace)
+- Reintroduced hidden input fields for CampaignInterest, DeliveryPreference, and source
+- Ensures both Airtable and Zapier receive these fields via FormData
+- Replaced alert with console-based version logging
+- Cleaned code for consistent field handling
 -->
 
 <!DOCTYPE html>
@@ -94,6 +94,11 @@ Changelog:
       <input type="checkbox" id="sms-text"><label for="sms-text">Yes, I want to receive SMS updates</label>
     </fieldset>
 
+    <!-- Hidden inputs to support formData.set() compatibility -->
+    <input type="hidden" name="CampaignInterest" />
+    <input type="hidden" name="DeliveryPreference" />
+    <input type="hidden" name="source" />
+
     <div style="text-align: center; margin-top: 20px;">
       <img src="https://images.squarespace-cdn.com/content/v1/663236de8f14cb7949a6465b/3e3ecff1-3751-4377-8c1b-4043bd2b67ed/Gr8ter+Things_Full+Logo_2024_png.png?format=1500w" alt="Gr8terThings Logo" style="width: 100%; height: auto;">
     </div>
@@ -112,7 +117,7 @@ Changelog:
     }
 
     form.addEventListener('submit', async function (e) {
-      alert("v2.0.1 script running");
+      console.log("Gr8terThings Subscribe Form v2.0.2");
       e.preventDefault();
 
       const wantsText = document.getElementById('sms-text').checked;
