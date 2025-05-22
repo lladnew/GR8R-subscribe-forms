@@ -1,0 +1,83 @@
+<!-- Gr8terThings Subscribe Form v1.4.5 -->
+<!--
+Changelog:
+- Ensures "Newsletter" is always included in Campaign Interest
+- Fixes bug where hidden inputs could be empty at time of formData submission
+- Adds final debug log to confirm values submitted
+-->
+
+<!-- [unchanged styles and HTML above the form omitted for brevity — use your current v1.4.4 version up to <script>] -->
+
+<script>
+const form = document.getElementById('subscriber-form');
+const spinner = document.getElementById('loading-spinner');
+const progressBar = document.getElementById('progress-bar');
+
+function getSource() {
+  const referrer = document.referrer || "Direct";
+  const page = window.location.href;
+  const timestamp = new Date().toISOString();
+  return `${referrer} | ${page} | ${timestamp}`;
+}
+
+form.addEventListener('submit', async function (e) {
+  e.preventDefault();
+
+  const wantsText = document.getElementById('sms-text').checked;
+  const wantsEmail = document.getElementById('pivot-opt-in').checked;
+
+  const campaignTags = ["Newsletter"];
+  if (wantsEmail) campaignTags.push("Pivot Year");
+
+  const deliveryPref = wantsText && wantsEmail ? 'Both' : wantsText ? 'Text' : wantsEmail ? 'Email' : '';
+  document.getElementById('deliveryPreference').value = deliveryPref;
+  document.getElementById('campaignInterest').value = campaignTags.join(", ");
+  document.getElementById('source').value = getSource();
+
+  const formData = new FormData(form);
+  const data = Object.fromEntries(formData.entries());
+
+  console.log("Submitting with:", data);
+
+  spinner.style.display = 'flex';
+  setTimeout(() => { progressBar.style.width = '100%'; }, 50);
+
+  try {
+    const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(data)
+    });
+
+    if (!airtableRes.ok) {
+      const errText = await airtableRes.text();
+      throw new Error(errText);
+    }
+
+    const airtableJson = await airtableRes.json();
+
+    await fetch("https://hooks.zapier.com/hooks/catch/18389329/27z9vfs/", {
+      method: "POST",
+      body: formData,
+      mode: "no-cors"
+    });
+
+    const redirectUrl = airtableJson.status === "updated"
+      ? "https://www.gr8terthings.com/thank-you-updated"
+      : "https://www.gr8terthings.com/thank-you";
+
+    setTimeout(() => {
+      window.location.href = redirectUrl;
+    }, 4000);
+
+  } catch (err) {
+    let message = "There was an error submitting your info. Please try again later.";
+    if (err.message.includes("duplicate") || err.message.includes("already")) {
+      message = "You're already subscribed — no need to resubmit.";
+    }
+    alert(message);
+    console.error("Submission Error:", err);
+    spinner.style.display = 'none';
+  }
+});
+</script>
