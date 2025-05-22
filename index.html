@@ -1,8 +1,9 @@
-<!-- Gr8terThings Subscribe Form v2 -->
+<!-- Gr8terThings Subscribe Form v2.0.1 -->
 <!--
 Changelog:
 - Replaced all hidden fields with `formData.set()` to bypass DOM quirks
 - Ensures Delivery Preference, Campaign Interest, and Source are always sent
+- Upgraded version tag to v2.0.1 for clarity in alerts and logs
 - Designed for Cloudflare Pages (no dependency on Squarespace)
 -->
 
@@ -111,7 +112,7 @@ Changelog:
     }
 
     form.addEventListener('submit', async function (e) {
-      alert("v1.4.8 script running");
+      alert("v2.0.1 script running");
       e.preventDefault();
 
       const wantsText = document.getElementById('sms-text').checked;
@@ -123,12 +124,11 @@ Changelog:
       const deliveryPref = wantsText && wantsEmail ? 'Both' : wantsText ? 'Text' : wantsEmail ? 'Email' : '';
 
       const formData = new FormData(form);
-      formData.set("CampaignInterest", campaignTags.join(", "));
-      formData.set("DeliveryPreference", deliveryPref);
+      formData.set("CampaignInterest", campaignTags.join(", ").trim());
+      formData.set("DeliveryPreference", deliveryPref.trim());
       formData.set("source", getSource());
 
       const data = Object.fromEntries(formData.entries());
-
       console.log("Submitting with:", data);
 
       spinner.style.display = 'flex';
