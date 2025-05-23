@@ -1,10 +1,10 @@
-<!-- Gr8terThings Subscribe Form v2.0.3 -->
+<!-- Gr8terThings Subscribe Form v2.0.4 -->
 <!--
 Changelog:
-- Fully manual data collection: no FormData, no hidden fields
-- Sends consistent, controlled JSON to Airtable and Zapier
-- Ensures Campaign Interest and Delivery Preference are always included
-- Removed alert, logs version and payload to console
+- Zapier now receives data using FormData to avoid CORS errors
+- Removes JSON content-type headers from Zapier request
+- Adds console.log of Zapier payload for visibility
+- Frontend confirmed sending correct data: DeliveryPreference + CampaignInterest
 -->
 
 <!DOCTYPE html>
@@ -13,9 +13,7 @@ Changelog:
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Subscribe – Gr8terThings</title>
-
   <link rel="preload" as="image" href="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&st=q23sokwf&raw=1">
-
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -66,7 +64,6 @@ Changelog:
   </style>
 </head>
 <body>
-
   <div id="loading-spinner">
     <img class="spinner-logo" src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&st=q23sokwf&raw=1" alt="Logo" onerror="this.style.display='none';">
     <div class="spinner-message">Unlocking Gr8ter Things!</div>
@@ -81,7 +78,6 @@ Changelog:
       <input type="email" id="emailAddress" placeholder="Email Address" required style="width: 100%; padding: 10px; margin-bottom: 10px;">
       <input type="checkbox" id="pivot-opt-in" checked>
       <label for="pivot-opt-in"><strong>Free Gift</strong> – Send my daily 1-minute motivation video</label>
-      <p style="font-size: 0.75rem; margin-top: 10px;">We respect your <a href="https://emailoctopus.com/legal/privacy" target="_blank" style="color: #003E24; text-decoration: underline;">email privacy</a></p>
     </fieldset>
 
     <div style="text-align: center; margin: 20px 0;">
@@ -93,10 +89,6 @@ Changelog:
       <input type="text" id="phoneNumber" placeholder="Phone Number (Optional)" style="width: 100%; padding: 10px; margin-bottom: 10px;">
       <input type="checkbox" id="sms-text"><label for="sms-text">Yes, I want to receive SMS updates</label>
     </fieldset>
-
-    <div style="text-align: center; margin-top: 20px;">
-      <img src="https://images.squarespace-cdn.com/content/v1/663236de8f14cb7949a6465b/3e3ecff1-3751-4377-8c1b-4043bd2b67ed/Gr8ter+Things_Full+Logo_2024_png.png?format=1500w" alt="Gr8terThings Logo" style="width: 100%; height: auto;">
-    </div>
   </form>
 
   <script>
@@ -113,13 +105,12 @@ Changelog:
 
     form.addEventListener('submit', async function (e) {
       e.preventDefault();
-      console.log("Gr8terThings Subscribe Form v2.0.3");
+      console.log("Gr8terThings Subscribe Form v2.0.4");
 
       const firstName = document.getElementById('firstName').value.trim();
       const lastName = document.getElementById('lastName').value.trim();
       const emailAddress = document.getElementById('emailAddress').value.trim();
       const phoneNumber = document.getElementById('phoneNumber').value.trim();
-
       const wantsText = document.getElementById('sms-text').checked;
       const wantsEmail = document.getElementById('pivot-opt-in').checked;
 
@@ -146,41 +137,28 @@ Changelog:
       setTimeout(() => { progressBar.style.width = '100%'; }, 50);
 
       try {
-        // Send to Airtable
-        const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev", {
+        await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
         });
 
-        if (!airtableRes.ok) {
-          const errText = await airtableRes.text();
-          throw new Error(errText);
-        }
+        const zapierForm = new FormData();
+        Object.entries(data).forEach(([k, v]) => zapierForm.append(k, v));
+        console.log("Sending to Zapier:", Object.fromEntries(zapierForm));
 
-        const airtableJson = await airtableRes.json();
-
-        // Send to Zapier
         await fetch("https://hooks.zapier.com/hooks/catch/18389329/27z9vfs/", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
+          body: zapierForm,
+          mode: "no-cors"
         });
 
-        const redirectUrl = airtableJson.status === "updated"
-          ? "https://www.gr8terthings.com/thank-you-updated"
-          : "https://www.gr8terthings.com/thank-you";
-
         setTimeout(() => {
-          window.location.href = redirectUrl;
+          window.location.href = "https://www.gr8terthings.com/thank-you";
         }, 4000);
 
       } catch (err) {
-        let message = "There was an error submitting your info. Please try again later.";
-        if (err.message.includes("duplicate") || err.message.includes("already")) {
-          message = "You're already subscribed — no need to resubmit.";
-        }
-        alert(message);
+        alert("Submission error. Please try again later.");
         console.error("Submission Error:", err);
         spinner.style.display = 'none';
       }
