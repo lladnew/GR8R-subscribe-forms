@@ -1,8 +1,8 @@
-<!-- Gr8terThings Subscribe Form v2.0.5 -->
+<!-- Gr8terThings Subscribe Form v2.0.6 -->
 <!--
 Changelog:
-- Restores layout and logic from v2.0.3
-- Replaces Squarespace bottom logo with Dropbox-hosted version
+- Removes Zapier integration (replaced with direct EmailOctopus call in Worker)
+- Preserves layout, logic, and styling from v2.0.5
 -->
 
 <!DOCTYPE html>
@@ -122,8 +122,8 @@ Changelog:
       const wantsEmail = document.getElementById('pivot-opt-in').checked;
 
       const deliveryPreference = wantsText && wantsEmail ? 'Both' :
-                                wantsText ? 'Text' :
-                                wantsEmail ? 'Email' : '';
+                                  wantsText ? 'Text' :
+                                  wantsEmail ? 'Email' : '';
 
       const campaignTags = ['Newsletter'];
       if (wantsEmail) campaignTags.push('Pivot Year');
@@ -156,12 +156,6 @@ Changelog:
         }
 
         const airtableJson = await airtableRes.json();
-
-        await fetch("https://hooks.zapier.com/hooks/catch/18389329/27z9vfs/", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(data)
-        });
 
         const redirectUrl = airtableJson.status === "updated"
           ? "https://www.gr8terthings.com/thank-you-updated"
