@@ -1,3 +1,11 @@
+<!-- Gr8terThings WhySubscribe Page v1.1.0 -->
+<!--
+Changelog:
+- Added try/catch for failed email lookup
+- Ensures error fallback is shown even on network/server failure
+- Styled not-found block to match main form layout
+-->
+
 <!DOCTYPE html>
 <html lang="en">
   <head>
@@ -5,7 +13,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Why Did You Subscribe? – Gr8terThings</title>
 
-    <!-- Preload assets (logo, fonts, etc.) from your existing site -->
+    <!-- Preload brand assets if needed -->
     <link rel="preload" as="image" href="/logo.png" />
     <link rel="stylesheet" href="/style.css" />
 
@@ -23,16 +31,19 @@
     </style>
   </head>
   <body class="bg-stone-50 text-neutral-800 p-4">
-    <main class="max-w-xl mx-auto bg-white rounded-2xl shadow-xl p-6 mt-16">
-      <div id="not-found" class="hidden">
-        <h2 class="text-xl font-bold mb-2">We're Sorry</h2>
-        <p class="mb-4">
-          We couldn't find that email address in our subscriber list.
+    <main class="max-w-xl mx-auto bg-white rounded-2xl shadow-xl p-6 mt-16 space-y-4">
+      
+      <!-- Not Found Message -->
+      <div id="not-found" class="hidden space-y-4 text-center">
+        <h2 class="text-xl font-bold">We're Sorry</h2>
+        <p>
+          We couldn't find that email address in our subscriber list.<br />
           Please reply directly to the email you received.
         </p>
         <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
       </div>
 
+      <!-- Response Form -->
       <form id="response-form" class="space-y-4 hidden">
         <h2 class="text-xl font-bold">Why Did You Subscribe?</h2>
         <input type="email" id="email" name="email" readonly class="w-full p-2 rounded border" />
@@ -40,8 +51,9 @@
         <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Submit</button>
       </form>
 
-      <div id="submitted-message" class="hidden">
-        <h2 class="text-xl font-bold mb-2">Thank you!</h2>
+      <!-- Thank You Message -->
+      <div id="submitted-message" class="hidden space-y-2 text-center">
+        <h2 class="text-xl font-bold">Thank you!</h2>
         <p>Your response has been submitted.</p>
       </div>
     </main>
@@ -71,15 +83,20 @@
           return;
         }
 
-        const result = await postWhySubscribe({ email, checkOnly: true });
+        try {
+          const result = await postWhySubscribe({ email, checkOnly: true });
 
-        if (!result.exists) {
+          if (!result?.exists) {
+            notFound.classList.remove('hidden');
+            return;
+          }
+
+          emailField.value = email;
+          form.classList.remove('hidden');
+        } catch (err) {
+          console.error("Validation error:", err);
           notFound.classList.remove('hidden');
-          return;
         }
-
-        emailField.value = email;
-        form.classList.remove('hidden');
       });
 
       form.addEventListener('submit', async (e) => {
