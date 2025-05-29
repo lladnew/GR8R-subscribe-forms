@@ -1,10 +1,9 @@
-<!-- Gr8terThings WhySubscribe Page v1.2.0 -->
+<!-- Gr8terThings WhySubscribe Page v1.2.1 -->
 <!--
 Changelog:
-- Restyled to match subscribe.gr8r.com (logo, fonts, layout)
-- Added centered logo at top
-- Preserved error-handling and fallback UI
-- Button and input styling now match Gr8terThings brand
+- Replaced relative API path `/api/whysubscribe` with full Worker URL:
+  https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe
+- Ensures form validation and submission work with standalone Worker backend
 -->
 
 <!DOCTYPE html>
@@ -14,7 +13,6 @@ Changelog:
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Why Did You Subscribe? – Gr8terThings</title>
 
-    <!-- Preload brand assets and global style -->
     <link rel="preload" as="image" href="/logo.png" />
     <link rel="stylesheet" href="/style.css" />
 
@@ -113,7 +111,7 @@ Changelog:
       const email = params.get('email');
 
       async function postWhySubscribe(data) {
-        const response = await fetch('/api/whysubscribe', {
+        const response = await fetch('https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(data),
