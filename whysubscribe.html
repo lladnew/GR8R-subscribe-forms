@@ -1,10 +1,9 @@
-<!-- whysubscribe.html v1.2.4 -->
+<!-- whysubscribe.html v1.2.5 -->
 <!--
 Changelog:
-- v1.2.4: Adds loading spinner and disables submit button while posting
--         Handles response message from server
--         Supports appended responses (not restricted to one submission)
--         Fixes logo path and layout fallback for unknown emails
+- Reverted logo to original Dropbox raw image link
+- Restored textarea placeholder text
+- No other changes from v1.2.4
 -->
 
 <!DOCTYPE html>
@@ -71,7 +70,7 @@ Changelog:
 </head>
 <body>
   <div class="container">
-    <img src="https://www.gr8terthings.com/uploads/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png" alt="Gr8terThings Logo" class="logo" />
+    <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />
     <div id="form-area">
       <p id="status">Loading...</p>
     </div>
@@ -105,7 +104,7 @@ Changelog:
         } else {
           formArea.innerHTML = `
             <p>We'd love to know why you subscribed:</p>
-            <textarea id="why"></textarea><br>
+            <textarea id="why" placeholder="Let us know what drew you to Gr8terThings..."></textarea><br>
             <button id="submitBtn">Submit</button>
           `;
 
