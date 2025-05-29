@@ -1,9 +1,9 @@
-<!-- whysubscribe.html v1.2.5 -->
+<!-- whysubscribe.html v1.2.6 -->
 <!--
 Changelog:
-- Reverted logo to original Dropbox raw image link
-- Restored textarea placeholder text
-- No other changes from v1.2.4
+- Added logo to 'Sorry' fallback view
+- Updated main prompt text + textarea placeholder
+- Catch JSON parse error after fetch so MailerSend issues don't show user-facing errors
 -->
 
 <!DOCTYPE html>
@@ -86,8 +86,10 @@ Changelog:
     const spinner = document.getElementById("spinner");
     const message = document.getElementById("message");
 
+    const logoHTML = '<img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />';
+
     if (!email) {
-      status.innerHTML = `We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.<br><br><a href="https://gr8r.com">Visit Our Home Page</a>`;
+      status.innerHTML = `${logoHTML}<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href="https://gr8r.com">Visit Our Home Page</a>`;
     } else {
       status.innerText = "Checking your subscriber status...";
       fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
@@ -100,11 +102,11 @@ Changelog:
       .then(res => res.json())
       .then(result => {
         if (!result.found) {
-          formArea.innerHTML = `<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href='https://gr8r.com'>Visit Our Home Page</a>`;
+          formArea.innerHTML = `${logoHTML}<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href='https://gr8r.com'>Visit Our Home Page</a>`;
         } else {
           formArea.innerHTML = `
-            <p>We'd love to know why you subscribed:</p>
-            <textarea id="why" placeholder="Let us know what drew you to Gr8terThings..."></textarea><br>
+            <p>Tell me what prompted you to subscribe:</p>
+            <textarea id="why" placeholder="Let us know what drew you to Gr8ter Things and what prompted you to sign up..."></textarea><br>
             <button id="submitBtn">Submit</button>
           `;
 
@@ -127,11 +129,21 @@ Changelog:
               },
               body: JSON.stringify({ email, response: responseText })
             })
-            .then(res => res.json())
-            .then(data => {
+            .then(async (res) => {
               spinner.style.display = "none";
-              message.innerText = data.status === "appended" ? "Thanks for sharing your response!" : "Something unexpected happened.";
-              message.className = "message";
+              let json = {};
+              try {
+                json = await res.json();
+              } catch (e) {
+                console.warn("Non-JSON response, assuming success");
+              }
+              if (res.ok) {
+                message.innerText = "Thanks for sharing your response!";
+                message.className = "message";
+              } else {
+                message.innerText = "Something unexpected happened.";
+                message.className = "message error";
+              }
               submitBtn.disabled = false;
             })
             .catch(() => {
