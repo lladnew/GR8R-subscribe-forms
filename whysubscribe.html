@@ -1,10 +1,10 @@
-<!-- Gr8terThings WhySubscribe Page v1.2.2 – Diagnostic Build -->
+<!-- Gr8terThings WhySubscribe Page v1.2.3 -->
 <!--
 Changelog:
-- Logs fetch start, response, and failure details to console
-- UI distinguishes between missing email vs. unfound email
-- Added friendly welcome message if no email param
-- Insert your logo URL below
+- Removed broken <link rel="stylesheet"> reference to nonexistent style.css
+- Removed logo preload (Dropbox preload warning)
+- JS confirmed moved to end and verified DOMContentLoaded block
+- Expect full browser logs on next test
 -->
 
 <!DOCTYPE html>
@@ -14,7 +14,6 @@ Changelog:
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Why Did You Subscribe? – Gr8terThings</title>
 
-  <link rel="stylesheet" href="/style.css" />
   <style>
     body {
       font-family: system-ui, sans-serif;
@@ -67,17 +66,14 @@ Changelog:
 
 <body>
   <main class="container space-y-4">
-    <!-- Replace this logo src with your actual hosted logo URL -->
-    <img src="https://www.gr8terthings.com/path-to-your-logo.png" alt="Gr8terThings Logo" class="logo" />
+    <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />
 
-    <!-- Friendly welcome message when no email param is given -->
     <div id="welcome" class="hidden">
       <h2 class="text-xl font-bold">Welcome!</h2>
       <p>Please check your email for a personalized response link.</p>
       <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
     </div>
 
-    <!-- Not Found Message -->
     <div id="not-found" class="hidden">
       <h2 class="text-xl font-bold">We're Sorry</h2>
       <p>
@@ -87,7 +83,6 @@ Changelog:
       <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
     </div>
 
-    <!-- Response Form -->
     <form id="response-form" class="space-y-4 hidden">
       <h2 class="text-xl font-bold">Why Did You Subscribe?</h2>
       <input type="email" id="email" name="email" readonly />
@@ -95,7 +90,6 @@ Changelog:
       <button type="submit">Submit</button>
     </form>
 
-    <!-- Thank You Message -->
     <div id="submitted-message" class="hidden">
       <h2 class="text-xl font-bold">Thank you!</h2>
       <p>Your response has been submitted.</p>
@@ -136,6 +130,7 @@ Changelog:
     }
 
     window.addEventListener('DOMContentLoaded', async () => {
+      console.log("Page loaded. Checking for email param:", email);
       if (!email) {
         welcome.classList.remove('hidden');
         return;
