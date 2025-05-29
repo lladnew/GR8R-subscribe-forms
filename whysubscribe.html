@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Why Did You Subscribe? – Gr8terThings</title>
+
+    <!-- Preload assets (logo, fonts, etc.) from your existing site -->
+    <link rel="preload" as="image" href="/logo.png" />
+    <link rel="stylesheet" href="/style.css" />
+
+    <style>
+      .hidden { display: none; }
+      textarea {
+        width: 100%;
+        min-height: 160px;
+        padding: 1rem;
+        border: 1px solid #ccc;
+        border-radius: 0.5rem;
+        font-size: 1rem;
+        resize: vertical;
+      }
+    </style>
+  </head>
+  <body class="bg-stone-50 text-neutral-800 p-4">
+    <main class="max-w-xl mx-auto bg-white rounded-2xl shadow-xl p-6 mt-16">
+      <div id="not-found" class="hidden">
+        <h2 class="text-xl font-bold mb-2">We're Sorry</h2>
+        <p class="mb-4">
+          We couldn't find that email address in our subscriber list.
+          Please reply directly to the email you received.
+        </p>
+        <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
+      </div>
+
+      <form id="response-form" class="space-y-4 hidden">
+        <h2 class="text-xl font-bold">Why Did You Subscribe?</h2>
+        <input type="email" id="email" name="email" readonly class="w-full p-2 rounded border" />
+        <textarea id="whysubscribe" name="whysubscribe" placeholder="Let us know what drew you to Gr8terThings..." required></textarea>
+        <button type="submit" class="bg-orange-500 text-white px-4 py-2 rounded hover:bg-orange-600">Submit</button>
+      </form>
+
+      <div id="submitted-message" class="hidden">
+        <h2 class="text-xl font-bold mb-2">Thank you!</h2>
+        <p>Your response has been submitted.</p>
+      </div>
+    </main>
+
+    <script>
+      const form = document.getElementById('response-form');
+      const notFound = document.getElementById('not-found');
+      const submitted = document.getElementById('submitted-message');
+      const emailField = document.getElementById('email');
+      const textField = document.getElementById('whysubscribe');
+
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get('email');
+
+      async function postWhySubscribe(data) {
+        const response = await fetch('/api/whysubscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(data),
+        });
+        return response.json();
+      }
+
+      window.addEventListener('DOMContentLoaded', async () => {
+        if (!email) {
+          notFound.classList.remove('hidden');
+          return;
+        }
+
+        const result = await postWhySubscribe({ email, checkOnly: true });
+
+        if (!result.exists) {
+          notFound.classList.remove('hidden');
+          return;
+        }
+
+        emailField.value = email;
+        form.classList.remove('hidden');
+      });
+
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const data = {
+          email: emailField.value,
+          whysubscribe: textField.value,
+        };
+
+        await postWhySubscribe(data);
+
+        form.classList.add('hidden');
+        submitted.classList.remove('hidden');
+      });
+    </script>
+  </body>
+</html>
