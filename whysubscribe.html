@@ -1,10 +1,10 @@
-<!-- Gr8terThings WhySubscribe Page v1.2.3 -->
+<!-- whysubscribe.html v1.2.4 -->
 <!--
 Changelog:
-- Removed broken <link rel="stylesheet"> reference to nonexistent style.css
-- Removed logo preload (Dropbox preload warning)
-- JS confirmed moved to end and verified DOMContentLoaded block
-- Expect full browser logs on next test
+- v1.2.4: Adds loading spinner and disables submit button while posting
+-         Handles response message from server
+-         Supports appended responses (not restricted to one submission)
+-         Fixes logo path and layout fallback for unknown emails
 -->
 
 <!DOCTYPE html>
@@ -12,164 +12,139 @@ Changelog:
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Why Did You Subscribe? – Gr8terThings</title>
-
+  <title>Why Subscribe</title>
   <style>
     body {
-      font-family: system-ui, sans-serif;
-      background-color: #fdfaf6;
-      color: #1f1f1f;
-      padding: 2rem;
-      margin: 0;
+      font-family: Arial, sans-serif;
+      text-align: center;
+      padding: 2em;
+      background-color: #f9f9f9;
+    }
+    .logo {
+      max-width: 200px;
+      margin-bottom: 1.5em;
     }
     .container {
       max-width: 600px;
       margin: 0 auto;
       background: white;
-      padding: 2rem;
-      border-radius: 1.5rem;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
-      text-align: center;
-    }
-    .logo {
-      width: 120px;
-      margin: 0 auto 1.5rem;
-    }
-    input[type="email"], textarea {
-      width: 100%;
-      padding: 0.75rem;
-      margin-bottom: 1rem;
-      border: 1px solid #ccc;
-      border-radius: 0.5rem;
-      font-size: 1rem;
+      padding: 2em;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     }
     textarea {
-      min-height: 160px;
-      resize: vertical;
+      width: 100%;
+      min-height: 120px;
+      margin-top: 1em;
+      padding: 1em;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1em;
     }
     button {
-      background-color: #ff7a00;
-      color: white;
+      margin-top: 1em;
+      padding: 0.75em 2em;
+      font-size: 1em;
       border: none;
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-size: 1rem;
+      border-radius: 5px;
+      background-color: #f68b1e;
+      color: white;
       cursor: pointer;
     }
-    button:hover {
-      background-color: #e86600;
+    button:disabled {
+      background-color: #ccc;
+      cursor: not-allowed;
     }
-    .hidden { display: none; }
-    .space-y-4 > * + * { margin-top: 1rem; }
+    .spinner {
+      display: none;
+      margin-top: 1em;
+    }
+    .message {
+      margin-top: 1.5em;
+      font-size: 1.1em;
+      color: green;
+    }
+    .error {
+      color: red;
+    }
   </style>
 </head>
-
 <body>
-  <main class="container space-y-4">
-    <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />
-
-    <div id="welcome" class="hidden">
-      <h2 class="text-xl font-bold">Welcome!</h2>
-      <p>Please check your email for a personalized response link.</p>
-      <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
+  <div class="container">
+    <img src="https://www.gr8terthings.com/uploads/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png" alt="Gr8terThings Logo" class="logo" />
+    <div id="form-area">
+      <p id="status">Loading...</p>
     </div>
-
-    <div id="not-found" class="hidden">
-      <h2 class="text-xl font-bold">We're Sorry</h2>
-      <p>
-        We couldn't find that email address in our subscriber list.<br />
-        Please reply directly to the email you received.
-      </p>
-      <a href="https://gr8r.com" class="text-orange-600 underline">Return to homepage</a>
-    </div>
-
-    <form id="response-form" class="space-y-4 hidden">
-      <h2 class="text-xl font-bold">Why Did You Subscribe?</h2>
-      <input type="email" id="email" name="email" readonly />
-      <textarea id="whysubscribe" name="whysubscribe" placeholder="Let us know what drew you to Gr8terThings..." required></textarea>
-      <button type="submit">Submit</button>
-    </form>
-
-    <div id="submitted-message" class="hidden">
-      <h2 class="text-xl font-bold">Thank you!</h2>
-      <p>Your response has been submitted.</p>
-    </div>
-  </main>
+    <div class="spinner" id="spinner">Submitting...</div>
+    <div class="message" id="message"></div>
+  </div>
 
   <script>
-    const form = document.getElementById('response-form');
-    const notFound = document.getElementById('not-found');
-    const submitted = document.getElementById('submitted-message');
-    const emailField = document.getElementById('email');
-    const textField = document.getElementById('whysubscribe');
-    const welcome = document.getElementById('welcome');
-
     const params = new URLSearchParams(window.location.search);
-    const email = params.get('email');
-    const endpoint = 'https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe';
+    const email = params.get("email");
+    const formArea = document.getElementById("form-area");
+    const status = document.getElementById("status");
+    const spinner = document.getElementById("spinner");
+    const message = document.getElementById("message");
 
-    async function postWhySubscribe(data) {
-      console.log('Starting fetch to:', endpoint);
-      console.log('Payload:', data);
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(data),
-      });
+    if (!email) {
+      status.innerHTML = `We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.<br><br><a href="https://gr8r.com">Visit Our Home Page</a>`;
+    } else {
+      status.innerText = "Checking your subscriber status...";
+      fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ email, checkOnly: true })
+      })
+      .then(res => res.json())
+      .then(result => {
+        if (!result.found) {
+          formArea.innerHTML = `<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href='https://gr8r.com'>Visit Our Home Page</a>`;
+        } else {
+          formArea.innerHTML = `
+            <p>We'd love to know why you subscribed:</p>
+            <textarea id="why"></textarea><br>
+            <button id="submitBtn">Submit</button>
+          `;
 
-      console.log('Fetch response:', response);
-      if (!response.ok) {
-        const errorText = await response.text();
-        console.error('Non-OK response:', response.status, errorText);
-        throw new Error(`Fetch failed: ${response.status}`);
-      }
+          document.getElementById("submitBtn").addEventListener("click", () => {
+            const responseText = document.getElementById("why").value.trim();
+            if (!responseText) {
+              message.innerText = "Please enter your response before submitting.";
+              message.className = "message error";
+              return;
+            }
+            spinner.style.display = "block";
+            message.innerText = "";
+            const submitBtn = document.getElementById("submitBtn");
+            submitBtn.disabled = true;
 
-      const json = await response.json();
-      console.log('Fetch JSON result:', json);
-      return json;
-    }
-
-    window.addEventListener('DOMContentLoaded', async () => {
-      console.log("Page loaded. Checking for email param:", email);
-      if (!email) {
-        welcome.classList.remove('hidden');
-        return;
-      }
-
-      try {
-        const result = await postWhySubscribe({ email, checkOnly: true });
-
-        if (!result?.exists) {
-          console.warn('Email not found in Airtable');
-          notFound.classList.remove('hidden');
-          return;
+            fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json"
+              },
+              body: JSON.stringify({ email, response: responseText })
+            })
+            .then(res => res.json())
+            .then(data => {
+              spinner.style.display = "none";
+              message.innerText = data.status === "appended" ? "Thanks for sharing your response!" : "Something unexpected happened.";
+              message.className = "message";
+              submitBtn.disabled = false;
+            })
+            .catch(() => {
+              spinner.style.display = "none";
+              message.innerText = "There was a problem submitting your response.";
+              message.className = "message error";
+              submitBtn.disabled = false;
+            });
+          });
         }
-
-        emailField.value = email;
-        form.classList.remove('hidden');
-      } catch (err) {
-        console.error("Validation error:", err);
-        notFound.classList.remove('hidden');
-      }
-    });
-
-    form.addEventListener('submit', async (e) => {
-      e.preventDefault();
-
-      const data = {
-        email: emailField.value,
-        whysubscribe: textField.value,
-      };
-
-      try {
-        await postWhySubscribe(data);
-        form.classList.add('hidden');
-        submitted.classList.remove('hidden');
-      } catch (err) {
-        alert('There was a problem submitting your response. Please try again.');
-        console.error('Submit error:', err);
-      }
-    });
+      });
+    }
   </script>
 </body>
 </html>
