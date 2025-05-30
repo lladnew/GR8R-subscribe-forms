@@ -1,9 +1,9 @@
-<!-- whysubscribe.html v1.2.6 -->
+<!-- whysubscribe.html v1.2.7 -->
 <!--
 Changelog:
-- Added logo to 'Sorry' fallback view
-- Updated main prompt text + textarea placeholder
-- Catch JSON parse error after fetch so MailerSend issues don't show user-facing errors
+- Centered layout elements
+- Matched font and button style to subscribe.gr8r.com
+- Replaced logos and added Visit link post-submission
 -->
 
 <!DOCTYPE html>
@@ -14,14 +14,16 @@ Changelog:
   <title>Why Subscribe</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       text-align: center;
       padding: 2em;
       background-color: #f9f9f9;
+      color: #003E24;
     }
     .logo {
-      max-width: 200px;
-      margin-bottom: 1.5em;
+      max-width: 220px;
+      margin: 0 auto 1.5em;
+      display: block;
     }
     .container {
       max-width: 600px;
@@ -39,6 +41,8 @@ Changelog:
       border-radius: 8px;
       border: 1px solid #ccc;
       font-size: 1em;
+      box-sizing: border-box;
+      resize: vertical;
     }
     button {
       margin-top: 1em;
@@ -49,6 +53,7 @@ Changelog:
       background-color: #f68b1e;
       color: white;
       cursor: pointer;
+      font-weight: bold;
     }
     button:disabled {
       background-color: #ccc;
@@ -61,16 +66,29 @@ Changelog:
     .message {
       margin-top: 1.5em;
       font-size: 1.1em;
-      color: green;
     }
     .error {
       color: red;
+    }
+    .visit-logo {
+      display: inline-block;
+      vertical-align: middle;
+      height: 40px;
+      margin-left: 8px;
+    }
+    a.visit-link {
+      display: inline-flex;
+      align-items: center;
+      font-size: 1.2em;
+      font-weight: bold;
+      color: #003E24;
+      text-decoration: none;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />
+    <img src="https://www.dropbox.com/scl/fi/sim7qver8bhli3tuqwr7f/Gr8ter-Things_Full-Logo_3850X2459_png.png?rlkey=aebcee2x0qviyashei35onat1&raw=1" alt="Gr8terThings Logo" class="logo" />
     <div id="form-area">
       <p id="status">Loading...</p>
     </div>
@@ -86,10 +104,14 @@ Changelog:
     const spinner = document.getElementById("spinner");
     const message = document.getElementById("message");
 
-    const logoHTML = '<img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Gr8terThings Logo" class="logo" />';
+    const errorHTML = `
+      <p>We're sorry, we couldn't find that email on our subscriber list.<br>Please simply reply to the email you received.</p>
+      <br><a href="https://gr8r.com" class="visit-link">Visit:
+      <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Visit" class="visit-logo" /></a>
+    `;
 
     if (!email) {
-      status.innerHTML = `${logoHTML}<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href="https://gr8r.com">Visit Our Home Page</a>`;
+      status.innerHTML = errorHTML;
     } else {
       status.innerText = "Checking your subscriber status...";
       fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
@@ -102,7 +124,7 @@ Changelog:
       .then(res => res.json())
       .then(result => {
         if (!result.found) {
-          formArea.innerHTML = `${logoHTML}<p>We're sorry, we couldn't find that email on our subscriber list. Please simply reply to the email you received.</p><br><a href='https://gr8r.com'>Visit Our Home Page</a>`;
+          formArea.innerHTML = errorHTML;
         } else {
           formArea.innerHTML = `
             <p>Tell me what prompted you to subscribe:</p>
@@ -138,13 +160,16 @@ Changelog:
                 console.warn("Non-JSON response, assuming success");
               }
               if (res.ok) {
-                message.innerText = "Thanks for sharing your response!";
-                message.className = "message";
+                formArea.innerHTML = `
+                  <p style="font-size: 1.3em;">Thanks for sharing your response!</p>
+                  <br><a href="https://gr8r.com" class="visit-link">Visit:
+                  <img src="https://www.dropbox.com/scl/fi/9tocsju32uvvpk2vn64i0/GR8R_logo_2024_ascending-grow_stairs_png-50percentsmaller.png?rlkey=t9a3cie30s2pswmx1e4u7k5zr&raw=1" alt="Visit" class="visit-logo" /></a>
+                `;
               } else {
                 message.innerText = "Something unexpected happened.";
                 message.className = "message error";
+                submitBtn.disabled = false;
               }
-              submitBtn.disabled = false;
             })
             .catch(() => {
               spinner.style.display = "none";
