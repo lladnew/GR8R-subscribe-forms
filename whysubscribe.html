@@ -1,9 +1,7 @@
-<!-- whysubscribe.html v1.3.1 -->
+<!-- whysubscribe.html v1.3.2 -->
 <!--
 Changelog:
-- changed button color to #B44E00
--changed hover button color to #9C4305
--fixed button text color back to #fff
+updated worker URL in the "fetch" lines... somewhere along the line subscribegr8r snuck in to replace gr8r
 -->
 
 <!DOCTYPE html>
@@ -118,7 +116,7 @@ Changelog:
       status.innerHTML = errorHTML;
     } else {
       status.innerText = "Checking your subscriber status...";
-      fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
+      fetch("https://gr8r-airtable-proxy.gr8r.workers.dev/api/whysubscribe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -148,7 +146,7 @@ Changelog:
             const submitBtn = document.getElementById("submitBtn");
             submitBtn.disabled = true;
 
-            fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev/api/whysubscribe", {
+            fetch("https://gr8r-airtable-proxy.gr8r.workers.dev/api/whysubscribe", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
