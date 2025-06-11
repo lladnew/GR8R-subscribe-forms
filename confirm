@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Subscription Confirmed</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      text-align: center;
+      padding: 4em;
+    }
+    .message {
+      font-size: 1.5rem;
+      margin-top: 2em;
+    }
+  </style>
+</head>
+<body>
+  <h1>Gr8terThings</h1>
+  <div id="response" class="message">Processing your confirmation...</div>
+
+  <script>
+    async function confirmSubscription() {
+      const params = new URLSearchParams(window.location.search);
+      const email = params.get("email");
+
+      if (!email) {
+        document.getElementById("response").innerText = "Missing email address.";
+        return;
+      }
+
+      try {
+        const res = await fetch(`https://gr8r-airtable-proxy.gr8r.workers.dev/api/confirm?email=${encodeURIComponent(email)}`);
+        const data = await res.json();
+
+        const responseEl = document.getElementById("response");
+        if (data.status === "subscribed") {
+          responseEl.innerText = "Thank you for subscribing!";
+        } else if (data.status === "already_subscribed") {
+          responseEl.innerText = "You're already subscribed!";
+        } else {
+          responseEl.innerText = "We couldn't find your subscription.";
+        }
+      } catch (e) {
+        document.getElementById("response").innerText = "Something went wrong. Please try again.";
+      }
+    }
+
+    confirmSubscription();
+  </script>
+</body>
+</html>
