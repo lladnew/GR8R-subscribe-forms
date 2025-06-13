@@ -68,7 +68,7 @@
       }
 
       try {
-        const res = await fetch(`https://gr8r-airtable-proxy.gr8r.workers.dev/api/confirm?email=${encodeURIComponent(email)}`);
+        const res = await fetch(`https://gr8r-subscribe-worker.gr8r.workers.dev/api/confirm?email=${encodeURIComponent(email)}`);
         const data = await res.json();
 
         if (data.status === "subscribed") {
