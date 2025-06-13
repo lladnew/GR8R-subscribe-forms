@@ -1,7 +1,7 @@
-<!-- Gr8terThings Subscribe Form v2.0.7 -->
+<!-- Gr8terThings Subscribe Form v2.0.8 -->
 <!--
 Changelog:
-- updated line 146 "const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8rsubscribe.workers.dev"" to correct URL removing "subscribe"... damn chatGPT
+- updated line 146 to new worker name gr8r-subscribe-worker
 -->
 
 <!DOCTYPE html>
@@ -143,7 +143,7 @@ Changelog:
       setTimeout(() => { progressBar.style.width = '100%'; }, 50);
 
       try {
-        const airtableRes = await fetch("https://gr8r-airtable-proxy.gr8r.workers.dev", {
+        const airtableRes = await fetch("https://gr8r-subscribe-worker.gr8r.workers.dev", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(data)
