@@ -1,7 +1,7 @@
-<!-- whysubscribe.html v1.3.2 -->
+<!-- whysubscribe.html v1.3.3 -->
 <!--
 Changelog:
-updated worker URL in the "fetch" lines... somewhere along the line subscribegr8r snuck in to replace gr8r
+updated line 119 and 149 with new worker name: gr8r-subscribe-worker 
 -->
 
 <!DOCTYPE html>
@@ -116,7 +116,7 @@ updated worker URL in the "fetch" lines... somewhere along the line subscribegr8
       status.innerHTML = errorHTML;
     } else {
       status.innerText = "Checking your subscriber status...";
-      fetch("https://gr8r-airtable-proxy.gr8r.workers.dev/api/whysubscribe", {
+      fetch("https://gr8r-subscribe-worker.gr8r.workers.dev/api/whysubscribe", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
@@ -146,7 +146,7 @@ updated worker URL in the "fetch" lines... somewhere along the line subscribegr8
             const submitBtn = document.getElementById("submitBtn");
             submitBtn.disabled = true;
 
-            fetch("https://gr8r-airtable-proxy.gr8r.workers.dev/api/whysubscribe", {
+            fetch("https://gr8r-subscribe-worker.gr8r.workers.dev/api/whysubscribe", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json"
